@@ -8,3 +8,10 @@ The Matrix monitor for emacs.
 #+BEGIN_SRC shell
 $ make install
 #+END_SRC
+
+Put on emacs configuration =.emacs=.
+
+#+BEGIN_SRC elisp
+(add-to-list 'load-path "~/.emacs.d/matrix/")
+(require 'matrix)
+#+END_SRC
