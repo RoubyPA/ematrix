@@ -145,6 +145,7 @@
               'matrix-update-vars nil t)
     (setq matrix-list-column (matrix-make-new-column 2))
     (switch-to-buffer buffer)
+    (matrix-mode)
     (run-with-timer 1 (- 1 matrix-speed)
                     'matrix-main)))
 
@@ -154,6 +155,15 @@
   (cancel-function-timers 'matrix-main)
   (when (matrix-get-buffer)
     (kill-buffer (matrix-get-buffer))))
+
+(defvar matrix-mode-map nil "Keymap for `matrix-mode'")
+(setq matrix-mode-map (make-sparse-keymap))
+(define-key matrix-mode-map (kbd "q") 'matrix-off)
+(define-key matrix-mode-map (kbd "Q") 'matrix-off)
+
+(define-derived-mode matrix-mode fundamental-mode "The Matrix monitor"
+  "Major mode for displaying matrix buffer."
+  (use-local-map matrix-mode-map))
 
 (provide 'matrix)
 ;;; matrix.el ends here
