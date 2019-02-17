@@ -1,7 +1,9 @@
-#+TITLE: Matrix-monitor
+#+TITLE: eMatrix
 #+STARTUP: indent
 
 The Matrix monitor for emacs.
+
+[[screen.png]]
 
 ** Install
 
