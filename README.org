@@ -1,4 +1,10 @@
 #+TITLE: Matrix-monitor
-#+STRATUP: indent
+#+STARTUP: indent
 
 The Matrix monitor for emacs.
+
+** Install
+
+#+BEGIN_SRC shell
+$ make install
+#+END_SRC
