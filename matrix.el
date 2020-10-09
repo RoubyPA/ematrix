@@ -1,6 +1,6 @@
 ;;; matrix.el --- The Martrix monitor               -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2019  Pierre-Antoine Rouby
+;; Copyright (C) 2019,2020  Pierre-Antoine Rouby
 
 ;; Author: Pierre-Antoine Rouby <contact@parouby.fr>
 ;; Keywords: games
@@ -32,14 +32,20 @@
   "Matrix configuration."
   :group 'application)
 
-(defcustom matrix-list-char
+(defcustom matrix-char-list
   '("A" "B" "C" "D" "E" "F" "G" "H"
     "I" "J" "K" "L" "M" "N" "O" "P"
     "Q" "R" "S" "T" "U" "V" "W" "X"
-    "Y" "Z" "0" "1" "2" "3" "4" "5"
-    "6" "7" "8" "9" "λ" "+" "*" "#")
+    "Y" "Z"
+    "0" "1" "2" "3" "4" "5" "6" "7" "8" "9"
+    "λ" "α" "β" "γ" "δ" "ε" "ζ" "θ" "ξ" "φ")
   "Possible char for `matrix'."
   :type 'list :group 'matrix)
+
+(defcustom matrix-char-list-len
+  (length matrix-char-list)
+  "Length of `matrix-char-list'."
+  :type 'int :group 'matrix)
 
 (defcustom matrix-speed 0.9
   "Matrix scrolling speed."
@@ -55,6 +61,11 @@
   "Faces for `matrix'."
   :group 'matrix)
 
+(defface matrix-first-char-face
+  '((t (:foreground "white")))
+  "Head color."
+  :group 'matrix-faces)
+
 (defface matrix-char-face
   '((t (:foreground "green")))
   "Head color."
@@ -68,7 +79,7 @@
 (defvar matrix-buffer-width nil
   "Matrix width.")
 
-(cl-defstruct column x y)               ;Column structure
+(cl-defstruct column x y s)             ;Column structure
 
 (defvar matrix-list-column nil
   "Matrix list of current column")
@@ -92,18 +103,28 @@
             (newline))
           (make-list matrix-buffer-height ?\s)))
 
-(defun matrix-insert (x y)
+(defun matrix-insert (x y s)
   "Insert new char"
   (with-current-buffer (matrix-get-buffer)
-    (let* ((r (random (length matrix-list-char)))
-           (c (nth r matrix-list-char)))
+    (let* ((r (random matrix-char-list-len))
+           (c (nth r matrix-char-list)))
       (when (< y (- matrix-buffer-height 1))
-        (goto-char (+ 1 x (* y (+ 1 matrix-buffer-width))))
+        (goto-char (+ 1 x
+                      (* y (+ 1 matrix-buffer-width))))
         (delete-char 1)
-        (insert (propertize c 'face 'matrix-char-face)))
-      (when (and (<= 0 (- y 10))
-                 (< (- y 10) (- matrix-buffer-height 1)))
-        (goto-char (+ 1 x (* (- y 10) (+ 1 matrix-buffer-width))))
+        (insert (propertize c 'face 'matrix-first-char-face)))
+      (when (< (- y 1) (- matrix-buffer-height 1))
+        (goto-char (+ 1 x
+                      (* (- y 1)
+                         (+ 1 matrix-buffer-width))))
+        (let ((c (char-to-string (char-after))))
+          (delete-char 1)
+          (insert (propertize c 'face 'matrix-char-face))))
+      (when (and (<= 0 (- y s))
+                 (< (- y s) (- matrix-buffer-height 1)))
+        (goto-char (+ 1 x
+                      (* (- y s)
+                         (+ 1 matrix-buffer-width))))
         (delete-char 1)
         (insert-char ?\s)))))
 
@@ -112,7 +133,8 @@
   (if (= 0 n)
       '()
     (cons (make-column :x (random matrix-buffer-width)
-                       :y 0)
+                       :y 0
+                       :s (+ 5 (random 15)))
           (matrix-make-new-column (- n 1)))))
 
 (defun matrix-main ()
@@ -121,14 +143,17 @@
     (read-only-mode 0)
     (setq matrix-list-column
           (append
-           (matrix-make-new-column 2)
+           (matrix-make-new-column 1)
            (remove 'nil
                    (mapcar (lambda (c)
                              (let ((x (column-x c))
-                                   (y (column-y c)))
-                               (matrix-insert x y)
-                               (if (< y (+ 10 matrix-buffer-height))
-                                   (make-column :x x :y (+ 1 y))
+                                   (y (column-y c))
+                                   (s (column-s c)))
+                               (matrix-insert x y s)
+                               (if (< y (+ s matrix-buffer-height))
+                                   (make-column :x x
+                                                :y (+ 1 y)
+                                                :s s)
                                  nil)))
                            matrix-list-column))))
     (goto-char (point-min))
@@ -143,7 +168,7 @@
     (matrix-prepare-buffer)
     (add-hook 'window-size-change-functions
               'matrix-update-vars nil t)
-    (setq matrix-list-column (matrix-make-new-column 2))
+    (setq matrix-list-column (matrix-make-new-column 3))
     (switch-to-buffer buffer)
     (matrix-mode)
     (run-with-timer 1 (- 1 matrix-speed)
